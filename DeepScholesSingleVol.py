@@ -4,6 +4,7 @@ import pickle
 from scipy.stats import norm
 import pandas as pd
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 def blackScholesPrice(F, K, T, vol):
     sqt = vol * np.sqrt(T)
@@ -75,8 +76,9 @@ def read_df(df, batch_size, position, dfSize = 256000):
 
 def create_model(input_dim, h_layers, h_units, modelFile = None):
     layers = [k.layers.Dense(units=h_units,  input_dim=input_dim)]
-    layers +=[k.layers.Dropout(rate=0.8)]
+#    layers +=[k.layers.Dropout(rate=0.8)]
     layers +=[k.layers.Dense(units=h_units,activation='relu') for _ in range(h_layers)]
+    layers += [k.layers.BatchNormalization()]
     layers += [k.layers.Dense(units=1, activation='elu')]
     model = k.models.Sequential(layers)
     optimizer = k.optimizers.RMSprop(lr=0.001, clipnorm=5)
@@ -88,8 +90,8 @@ def create_model(input_dim, h_layers, h_units, modelFile = None):
             pass
     return model
 
-h_layers = 32
-h_units = 512
+h_layers = 16
+h_units = 256
 modelFile = 'bs_2_model.h5'
 dataFile = 'bsDataset.pkl'
 dfFile = 'bsFrame.csv'
@@ -103,11 +105,11 @@ if __name__=='__main__':
 
     model = create_model(input_dim=5, h_layers=h_layers, h_units=h_units, modelFile=modelFile)
 
-    batch_size = 512
-    epochs = 100
+    batch_size = 1024
+    epochs = dataFrameSize//(batch_size*4)
     inner_epoch = 100
-    for i in range(epochs):
-        X, y = read_df(dfFile, dataFrameSize/batch_size, i, dataFrameSize)
+    for i in tqdm(range(epochs)):
+        X, y = read_df(dfFile, batch_size*4, i, dataFrameSize)
         hist = model.fit(x=X, y=y, epochs=inner_epoch, batch_size=batch_size,
                   validation_split=0.05, shuffle=True, verbose=0)
 
