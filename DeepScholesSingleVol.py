@@ -74,14 +74,23 @@ def read_df(df, batch_size, position, dfSize = 256000):
     res = pd.read_csv(df, skiprows=int(batch_size*position), nrows=int(batch_size)).values
     return res[:, :-1], res[:,-1].reshape((int(batch_size),1))
 
+def add_normalized_layer(h_units, activation='relu'):
+    return [
+        k.layers.Dense(h_units, use_bias=False),
+        k.layers.BatchNormalization(),
+        k.layers.Activation(activation)
+            ]
+
+
 def create_model(input_dim, h_layers, h_units, modelFile = None):
     layers = [k.layers.Dense(units=h_units,  input_dim=input_dim)]
 #    layers +=[k.layers.Dropout(rate=0.8)]
-    layers +=[k.layers.Dense(units=h_units,activation='relu') for _ in range(h_layers)]
+    for _ in range(h_units):
+        layers += add_normalized_layer(h_units)
     layers += [k.layers.BatchNormalization()]
     layers += [k.layers.Dense(units=1, activation='elu')]
     model = k.models.Sequential(layers)
-    optimizer = k.optimizers.RMSprop(lr=0.001, clipnorm=5)
+    optimizer = k.optimizers.RMSprop(lr=0.001)
     model.compile(optimizer=optimizer, loss='mse')
     if modelFile is not None:
         try:
@@ -90,7 +99,7 @@ def create_model(input_dim, h_layers, h_units, modelFile = None):
             pass
     return model
 
-h_layers = 16
+h_layers = 8
 h_units = 256
 modelFile = 'bs_2_model.h5'
 dataFile = 'bsDataset.pkl'
@@ -111,7 +120,7 @@ if __name__=='__main__':
     for i in tqdm(range(epochs)):
         X, y = read_df(dfFile, batch_size*4, i, dataFrameSize)
         hist = model.fit(x=X, y=y, epochs=inner_epoch, batch_size=batch_size,
-                  validation_split=0.05, shuffle=True, verbose=0)
+                  validation_split=0.05, shuffle=True, verbose=2)
 
         if i > 0:
             if hist.history['val_loss'][-1] <= 0:
