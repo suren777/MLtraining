@@ -18,6 +18,21 @@ def mapHelper(a):
     F, K, T, vol = a
     return [blackScholesPrice(F, K, T, vol)]
 
+class DataGenerator(k.utils.Sequence):
+
+    def __init__(self, x_set, y_set, batch_size):
+        self.x, self.y = x_set, y_set
+        self.batch_size = batch_size
+
+    def __len__(self):
+        return int(np.ceil(len(self.x[0]) / float(self.batch_size)))
+
+    def __getitem__(self, idx):
+        batch_x = self.x[0][idx * self.batch_size:(idx + 1) * self.batch_size]
+        batch_y = self.y[idx * self.batch_size:(idx + 1) * self.batch_size]
+
+        return batch_x, batch_y
+
 
 def dataGenerator(batchSize):
     np.random.seed(121)
