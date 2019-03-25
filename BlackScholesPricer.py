@@ -69,4 +69,4 @@ generator = OptionsSequence(100)
 
 model = create_model(4, 5, 64, 'bsPricerModel.hdf5')
 
-model.fit_generator(
+# model.fit_generator(
