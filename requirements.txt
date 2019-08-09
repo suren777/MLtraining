@@ -1,0 +1,6 @@
+pandas
+matplotlib
+sklearn
+scipy
+seaborn
+tensorflow-gpu==2.0.0-beta1 
